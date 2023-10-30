@@ -1,0 +1,5 @@
+
+#ifndef SISTEMI_OPERATIVI_SHIP_H
+#define SISTEMI_OPERATIVI_SHIP_H
+
+#endif
