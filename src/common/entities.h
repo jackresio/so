@@ -5,6 +5,7 @@
 #define SISTEMIOPERATIVI_ENTITIES_H
 
 #include "utils/map.h"
+#include <unistd.h>
 
 /**
  * Struttura che rappresenta la merce generata ad inizio simulazione

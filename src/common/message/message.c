@@ -1,4 +1,5 @@
 #include "message.h"
-int main(void){
-    return 0;
+
+void sus(void){
+    return;
 }

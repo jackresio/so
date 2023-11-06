@@ -20,6 +20,7 @@ extern int SO_MAELSTROM;
 
 /**
  * Read specific configuration field
+ * This function should not be used
  * @param path path to configuration file
  * @param name configuration field name
  * @return return the config value of the field
@@ -33,4 +34,4 @@ int read_config(const char *path, const char *name);
  */
 void init_config(const char *path);
 
-#endif //SISTEMI_OPERATIVI_CONFIG_H
+#endif

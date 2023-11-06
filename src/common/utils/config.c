@@ -21,7 +21,7 @@ int SO_STORM_DURATION;
 int SO_SWELL_DURATION;
 int SO_MAELSTROM;
 
-int read_config(const char *path, const char *name) {
+static int read_config(const char *path, const char *name) {
     FILE *f;
     char format[50];
     char line[50];
@@ -33,7 +33,7 @@ int read_config(const char *path, const char *name) {
 
     f = fopen(path, "r");
     if (f == NULL) {
-        TEST_ERROR
+        CHECK_ERROR
         exit(1);
     }
 
