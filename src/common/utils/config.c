@@ -33,8 +33,7 @@ static int read_config(const char *path, const char *name) {
 
     f = fopen(path, "r");
     if (f == NULL) {
-        CHECK_ERROR
-        exit(1);
+        check_error(__FILE__, __LINE__);
     }
 
     while (fgets(line, 50, f) != NULL) {

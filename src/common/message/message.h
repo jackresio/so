@@ -3,13 +3,18 @@
 
 #include "../entities.h"
 
+enum {
+    REQUEST_LOAD,
+    REQUEST_ULOAD
+}typedef RequestType;
+
 /**
- * Il messaggio vedo e proprio
+ * Il messaggio vero e proprio
  */
 struct msg_body {
     unsigned int sender;
     unsigned int receiver;
-    unsigned int operation;
+    RequestType operation;
     Cargo cargo;
 } typedef MsgBody;
 
@@ -20,5 +25,15 @@ struct message {
     long mtype;
     MsgBody body;
 } typedef Msg;
+
+int msg_init(void);
+
+void msg_get(void);
+
+void msg_send(Msg msg);
+
+Msg msg_receive(long type);
+
+void msg_close(void );
 
 #endif

@@ -6,17 +6,6 @@
 #include "../utils/config.h"
 #include "../entities.h"
 
-
-#define KEY_MASTER "../src/main.c"
-#define KEY_GOODS 'G'
-#define KEY_PORTS 'P'
-#define KEY_UTILS 'U'
-#define KEY_SHIPS 'S'
-#define KEY_SYNC 's'
-#define KEY_DOCK 'D'
-#define KEY_MESSAGE 'M'
-#define KEY_SEMGOODS 'g'
-
 /**
  * Initialize all the shared memory segmented used in the simulation
  * This function should be called once in the main process

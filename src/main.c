@@ -1,9 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
+#include <signal.h>
+
 #include "common/entities.h"
 #include "common/utils/config.h"
 #include "common/memory/memory.h"
+#include "common/sync/sync.h"
+#include "common/utils/map.h"
+#include "main.h"
+#include "common/message/message.h"
 
 Ship *ships;
 Port *ports;
@@ -11,13 +18,27 @@ Good *goods;
 long *utils;
 
 
-int main(void){
-    int i = 0;
+int main(int argc, char *argv[]){
+    int i;
+    pid_t pid, pgid;
+    unsigned int loaded = 0, empty = 0, op = 0, swell = 0, storm = 0;
+    unsigned int days = 0;
     char **child_argv;
+    struct sigaction sa;
 
-    printf("Start Simulation \n");
+    printf("Start simulation \n");
+
+    set_exec_name("Main");
 
     srand(time(0));
+    bzero(&sa, sizeof(sa));
+    sa.sa_handler = sig_handler;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGALRM, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+
+    pgid = getpgid(getpid());
 
     child_argv = calloc(3, sizeof(char *));
     for (i = 0; i < 2; i++){
@@ -30,16 +51,178 @@ int main(void){
 
     printf("Allocating memory \n");
     shm_init();
-    shm_get_ships(&ships);
+    if (SO_NAVI > 0) {
+        shm_get_ships(&ships);
+    }
     shm_get_ports(&ports);
     shm_get_goods(&goods);
     shm_get_utils(&utils);
+    msg_init();
 
     printf("Initialize semaphore \n");
+    sem_init();
+
+    printf("Generating goods \n");
+    for (i = 0; i < SO_MERCI; i++) {
+        goods[i].id = i + 1;
+        goods[i].ttl = SO_MIN_VITA + (rand() % (SO_MAX_VITA - SO_MIN_VITA + 1));
+        goods[i].weight = 1 + (rand() % SO_SIZE);
+    }
+
+    for (i = 0; i < SO_MERCI; i++) {
+        printf("GOOD ID: ");
+        printf("%d, weight: %d, ttl: %d \n", goods[i].id, goods[i].weight, goods[i].ttl);
+    }
+
+    printf("Creating ports \n");
+    strcpy(child_argv[0], "port");
+    for (i = 0; i < SO_PORTI; i++) {
+        sprintf(child_argv[1], "%d", i);
+        get_port_position(&ports[i].position);
+        ports[i].docks = rand() % SO_BANCHINE + 1;
+        ports[i].supply.available = false;
+        ports[i].demand.available = false;
+        pid = fork();
+        switch (pid) {
+            case 0:
+                setpgid(getpid(), pgid);
+                execv("port.bin", child_argv);
+                break;
+            case -1:
+                check_error(__FILE__, __LINE__);
+                break;
+            default:
+                ports[i].id = pid;
+                break;
+        }
+    }
+
+    printf("Creating ships \n");
+    strcpy(child_argv[0], "ship");
+    for (i = 0; i < SO_NAVI; i++) {
+        sprintf(child_argv[1], "%d", i);
+        rand_position(&ships[i].position);
+        ships[i].capacity = SO_CAPACITY;
+        ships[i].speed = SO_SPEED;
+        ships[i].status = EMPTY;
+        pid = fork();
+        switch (pid) {
+            case 0:
+                setpgid(getpid(), pgid);
+                execv("ship.bin", child_argv);
+                break;
+            case -1:
+                check_error(__FILE__, __LINE__);
+                break;
+            default:
+                ships[i].id = pid;
+                break;
+        }
+    }
+
+    sem_sync_ready(ALL);
+    sem_sync_wait(ALL);
+    sem_sync_reset(ALL);
+    sem_sync_reset(GEN_DEMAND);
+    sem_sync_reset(GEN_SUPPLY);
 
 
+    printf("Start simulation\n");
+
+    while (days < SO_DAYS) {
+        alarm(1);
+        pause();
+        kill(0, SIGALRM);
+
+        /*Print goods*/
+        printf("GOODS INFORMATION\n");
+        for (i = 0; i < SO_MERCI; i++) {
+            printf("ID: %d ", goods[i].id);
+            printf("IN PORT: %d ", goods[i].available);
+            printf("ON SHIP: %d ", goods[i].on_ship);
+            printf("DELIVERED: %d ", goods[i].delivered);
+            printf("EXPIRED PORT: %d ", goods[i].expired_port);
+            printf("EXPIRED SHIP: %d ", goods[i].expired_ship);
+            printf("TOTAL: %d \n", goods[i].total);
+        }
+
+        /*Print ships*/
+        op = 0;
+        empty = 0;
+        loaded = 0;
+        swell = 0;
+        storm = 0;
+        for (i = 0; i < SO_NAVI; i++) {
+            switch (ships[i].status) {
+                case OP:
+                    op++;
+                    break;
+                case EMPTY:
+                    empty++;
+                    break;
+                case LOADED:
+                    loaded++;
+                    break;
+                case SWELL:
+                    swell++;
+                    break;
+                case STORM:
+                    storm++;
+                    break;
+                case ALIVE:
+                case SUNK:
+                case MOVING:
+                    break;
+            }
+        }
+        printf("SHIPS INFORMATION\n");
+        printf("LOADED: %d ", loaded);
+        printf("EMPTY: %d ", empty);
+        printf("OPERATION: %d", op);
+        printf("SWELL: %d", swell);
+        printf("STORM: %d", storm);
+
+        /*Print ports*/
+        printf("PORTS INFORMATION\n");
+        for (i = 0; i < SO_PORTI; i++) {
+            printf("ID: %d ", ports[i].id);
+            printf("AVAILABLE (lot): %d %d ", ports[i].supply.index_good, ports[i].supply.lot);
+            printf("SEND (lot): %d ", ports[i].send);
+            printf("RECEIVED (lot): %d %d \n", ports[i].demand.index_good, ports[i].received);
+        }
+        fflush(stdout);
+
+        sem_sync_ready(ALL);
+        sem_sync_wait(ALL);
+        sem_sync_reset(ALL);
+        sem_sync_reset(GEN_DEMAND);
+        sem_sync_reset(GEN_SUPPLY);
+        utils[GOODS_SUPPLY] = 0;
+        utils[GOODS_DEMAND] = 0;
+
+        days++;
+        printf("\n DSKJDSHSK %d \n", days);
+    }
     return 0;
+}
 
 
+void free_memory(void) {
+    sem_close();
+    shmdt(ships);
+    shmdt(ports);
+    shmdt(goods);
+    shmdt(utils);
+}
 
+void sig_handler(int sig_num) {
+    switch (sig_num) {
+        case SIGALRM:
+            break;
+        case SIGSTOP:
+        case SIGINT:
+        case SIGTERM:
+            free_memory();
+            exit(0);
+    }
 }

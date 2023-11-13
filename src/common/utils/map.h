@@ -27,5 +27,7 @@ void get_port_position(Point *position);
  */
 int compare_position(Point p1, Point p2);
 
+double calc_distance(Point a, Point b);
+
 
 #endif

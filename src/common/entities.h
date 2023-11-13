@@ -30,7 +30,7 @@ struct good {
  */
 struct cargo {
     unsigned int available;
-    unsigned int id_good;
+    unsigned int index_good;
     unsigned int lot;
     unsigned int ttl;
 }typedef Cargo;
