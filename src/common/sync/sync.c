@@ -89,7 +89,6 @@ int sem_reserve(int sem_id, int sem_num){
     error_value = semop(sem_id, &sops, 1);
     if (error_value == -1){
         check_error(__FILE__, __LINE__);
-
     }
 
     return error_value;

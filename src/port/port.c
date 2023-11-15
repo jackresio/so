@@ -76,7 +76,7 @@ void good_gen(void) {
     if (ports[my_index].supply.lot == 0 || ports[my_index].supply.available == false) {
         do {
             rand_good = rand() % SO_MERCI;
-        } while (rand_good == ports[my_index].demand.index_good && ports[my_index].demand.available == true);
+        } while (ports[my_index].demand.available == true && rand_good == ports[my_index].demand.index_good);
 
         rand_ton = rand() % 100;
 
@@ -183,7 +183,6 @@ void sig_handler(int signum) {
                     goods[id_good].available -= ports[my_index].supply.lot;
                 }
             }
-            good_gen();
             sem_sync_ready(ALL);
             sem_sync_wait(ALL);
     }

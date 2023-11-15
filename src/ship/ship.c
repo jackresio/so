@@ -54,17 +54,14 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         if (dest_index > -1) {
+            ships[my_index].status = MOVING;
             move(&ports[dest_index]);
             if (ships[my_index].status == EMPTY) {
-                dock_reserve(dest_index);
                 ships[my_index].status = OP;
                 load(dest_index);
-                dock_release(dest_index);
             } else if (ships[my_index].status == LOADED) {
-                dock_reserve(dest_index);
                 ships[my_index].status = OP;
                 unload(dest_index);
-                dock_release(dest_index);
             }
         } else {
             pause();
@@ -124,12 +121,8 @@ int nearest_port(void) {
                 i++;
             }
             break;
-        case ALIVE:
-        case SUNK:
         case OP:
-        case MOVING:;
-        case SWELL:
-        case STORM:
+        case MOVING:
             break;
     }
     return dest;

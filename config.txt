@@ -1,4 +1,4 @@
-SO_NAVI = 10
+SO_NAVI = 1
 SO_PORTI = 4
 SO_MERCI = 3
 SO_SIZE = 1

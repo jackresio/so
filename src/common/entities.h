@@ -39,14 +39,10 @@ struct cargo {
  * Rappresentazione di tutti gli stati in cui si può trovare una nave
  */
 typedef enum{
-    ALIVE,
-    SUNK,
     OP,             /*Operation, durante carico e scarico*/
     MOVING,
     EMPTY,
-    LOADED,
-    SWELL,
-    STORM
+    LOADED
 } ShipState;
 
 struct ship {

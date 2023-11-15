@@ -21,7 +21,7 @@ long *utils;
 int main(int argc, char *argv[]){
     int i;
     pid_t pid, pgid;
-    unsigned int loaded = 0, empty = 0, op = 0, swell = 0, storm = 0;
+    unsigned int loaded = 0, empty = 0, op = 0, moving = 0;
     unsigned int days = 0;
     char **child_argv;
     struct sigaction sa;
@@ -150,8 +150,7 @@ int main(int argc, char *argv[]){
         op = 0;
         empty = 0;
         loaded = 0;
-        swell = 0;
-        storm = 0;
+        moving = 0;
         for (i = 0; i < SO_NAVI; i++) {
             switch (ships[i].status) {
                 case OP:
@@ -163,42 +162,30 @@ int main(int argc, char *argv[]){
                 case LOADED:
                     loaded++;
                     break;
-                case SWELL:
-                    swell++;
-                    break;
-                case STORM:
-                    storm++;
-                    break;
-                case ALIVE:
-                case SUNK:
                 case MOVING:
+                    moving++;
                     break;
             }
         }
         printf("SHIPS INFORMATION\n");
         printf("LOADED: %d ", loaded);
         printf("EMPTY: %d ", empty);
-        printf("OPERATION: %d", op);
-        printf("SWELL: %d", swell);
-        printf("STORM: %d", storm);
+        printf("OPERATION: %d ", op);
+        printf("MOVING: %d", moving);
 
         /*Print ports*/
         printf("PORTS INFORMATION\n");
         for (i = 0; i < SO_PORTI; i++) {
             printf("ID: %d ", ports[i].id);
-            printf("AVAILABLE (lot): %d %d ", ports[i].supply.index_good, ports[i].supply.lot);
+            printf("AVAILABLE %d (lot): %d ", ports[i].supply.index_good, ports[i].supply.lot);
             printf("SEND (lot): %d ", ports[i].send);
-            printf("RECEIVED (lot): %d %d \n", ports[i].demand.index_good, ports[i].received);
+            printf("RECEIVED %d (lot): %d \n", ports[i].demand.index_good, ports[i].received);
         }
         fflush(stdout);
 
         sem_sync_ready(ALL);
         sem_sync_wait(ALL);
         sem_sync_reset(ALL);
-        sem_sync_reset(GEN_DEMAND);
-        sem_sync_reset(GEN_SUPPLY);
-        utils[GOODS_SUPPLY] = 0;
-        utils[GOODS_DEMAND] = 0;
 
         days++;
         printf("\n DSKJDSHSK %d \n", days);
