@@ -152,6 +152,8 @@ void dispatch(void) {
             break;
         case REQUEST_ULOAD:
             response.body.cargo = ports[my_index].demand;
+            response.body.cargo.available = 0;
+
             response.body.operation = REQUEST_ULOAD;
             response.mtype = request.body.sender;
             response.body.sender = ports[my_index].id;

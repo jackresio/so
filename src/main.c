@@ -38,6 +38,7 @@ int main(int argc, char *argv[]){
     sigaction(SIGTERM, &sa, NULL);
 
 
+
     pgid = getpgid(getpid());
 
     child_argv = calloc(3, sizeof(char *));
@@ -126,13 +127,13 @@ int main(int argc, char *argv[]){
     sem_sync_reset(GEN_DEMAND);
     sem_sync_reset(GEN_SUPPLY);
 
-
     printf("Start simulation\n");
 
     while (days < SO_DAYS) {
         alarm(1);
         pause();
         kill(0, SIGALRM);
+        printf("\nGiorno %d \n", days + 1);
 
         /*Print goods*/
         printf("GOODS INFORMATION\n");
@@ -168,10 +169,10 @@ int main(int argc, char *argv[]){
             }
         }
         printf("SHIPS INFORMATION\n");
-        printf("LOADED: %d ", loaded);
-        printf("EMPTY: %d ", empty);
-        printf("OPERATION: %d ", op);
-        printf("MOVING: %d", moving);
+        printf("LOADED: %d \n", loaded);
+        printf("EMPTY: %d \n", empty);
+        printf("OPERATION: %d \n", op);
+        printf("MOVING: %d \n", moving);
 
         /*Print ports*/
         printf("PORTS INFORMATION\n");
@@ -188,7 +189,6 @@ int main(int argc, char *argv[]){
         sem_sync_reset(ALL);
 
         days++;
-        printf("\n DSKJDSHSK %d \n", days);
     }
     return 0;
 }

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS=-Wall -Werror -Wpedantic -std=c89 -D_GNU_SOURCE -g -lm
+CFLAGS= -Wall -Werror -Wpedantic -std=c89 -D_GNU_SOURCE -g -lm
 MSG = src/common/message/message.c
 SYNC = src/common/sync/sync.c
 UTILS = src/common/utils/config.c src/common/utils/utils.c

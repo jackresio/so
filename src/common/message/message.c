@@ -29,7 +29,7 @@ void msg_send(Msg msg){
 Msg msg_receive(long type){
     Msg msg;
     error_value = msgrcv(msg_id, &msg, sizeof(MsgBody), type, 0);
-    if (error_value == -1)
+    if (error_value == -1 && errno != 4)
         check_error(__FILE__, __LINE__);
     return msg;
 }

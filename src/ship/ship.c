@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         if (dest_index > -1) {
-            ships[my_index].status = MOVING;
             move(&ports[dest_index]);
             if (ships[my_index].status == EMPTY) {
                 ships[my_index].status = OP;
