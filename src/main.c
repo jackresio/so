@@ -130,8 +130,8 @@ int main(int argc, char *argv[]){
     printf("Start simulation\n");
 
     while (days < SO_DAYS) {
-        alarm(1);
         pause();
+        alarm(1);
         kill(0, SIGALRM);
         printf("\nGiorno %d \n", days + 1);
 

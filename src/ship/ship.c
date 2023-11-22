@@ -22,7 +22,7 @@ int days;
 int main(int argc, char *argv[]) {
     struct sigaction sa;
     char *ptr;
-    int dest_index;
+    int dest_index, last_port = -1;
 
     days = 0;
 
@@ -50,11 +50,13 @@ int main(int argc, char *argv[]) {
 
     my_index = (int) strtol(argv[1], &ptr, 10);
 
-    dest_index = nearest_port();
+    dest_index = nearest_port(-1);
 
     while (1) {
         if (dest_index > -1) {
+            last_port = ships[my_index].port;
             move(&ports[dest_index]);
+            ships[my_index].port = dest_index;
             if (ships[my_index].status == EMPTY) {
                 ships[my_index].status = OP;
                 load(dest_index);
@@ -65,12 +67,12 @@ int main(int argc, char *argv[]) {
         } else {
             pause();
         }
-        dest_index = nearest_port();
+        dest_index = nearest_port(last_port);
     }
-
 }
 
-int nearest_port(void) {
+int nearest_port(int last_port) {
+    static int last_visited_port = -1;
     int i;
     double travel_time, min_distance = 0, temp_distance;
     int dest = -1;
@@ -80,7 +82,7 @@ int nearest_port(void) {
             for (i = 0; i < SO_PORTI; i++) {
                 temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                 travel_time = temp_distance / SO_SPEED;
-                if (travel_time < ports[i].supply.ttl) {
+                if (travel_time < ports[i].supply.ttl && last_visited_port != i) {
                     min_distance = temp_distance;
                     dest = i;
                     break;
@@ -89,7 +91,7 @@ int nearest_port(void) {
             while (i < SO_PORTI) {
                 temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                 travel_time = temp_distance / SO_SPEED;
-                if (travel_time < ports[i].supply.ttl && temp_distance < min_distance) {
+                if (travel_time < ports[i].supply.ttl && temp_distance < min_distance && last_visited_port != i) {
                     min_distance = temp_distance;
                     dest = i;
                 }
@@ -101,7 +103,7 @@ int nearest_port(void) {
                 if (ports[i].demand.index_good == ships[my_index].cargo.index_good) {
                     temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                     travel_time = temp_distance / SO_SPEED;
-                    if (travel_time < ships[my_index].cargo.ttl) {
+                    if (travel_time < ships[my_index].cargo.ttl && last_visited_port != i) {
                         min_distance = temp_distance;
                         dest = i;
                         break;
@@ -112,7 +114,7 @@ int nearest_port(void) {
                 if (ports[i].demand.index_good == ships[my_index].cargo.index_good) {
                     temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                     travel_time = temp_distance / SO_SPEED;
-                    if (travel_time < ships[my_index].cargo.ttl && temp_distance < min_distance) {
+                    if (travel_time < ships[my_index].cargo.ttl && temp_distance < min_distance && last_visited_port != i) {
                         min_distance = temp_distance;
                         dest = i;
                     }
@@ -124,6 +126,7 @@ int nearest_port(void) {
         case MOVING:
             break;
     }
+    last_visited_port = dest;
     return dest;
 }
 
@@ -173,7 +176,6 @@ void load(int port_index) {
     request.body.cargo.lot = nearbyintf(((float) ships[my_index].capacity / goods[index_good].weight));
     msg_send(request);
     response = msg_receive(ships[my_index].id);
-    ships[my_index].port = port_index;
     operate(response.body.cargo);
 
     ships[my_index].cargo = response.body.cargo;
@@ -193,7 +195,6 @@ void unload(int port_index) {
                              ports[port_index].demand.lot : ships[my_index].cargo.lot;
     msg_send(request);
     response = msg_receive(ships[my_index].id);
-    ships[my_index].port = port_index;
     operate(response.body.cargo);
 
     ships[my_index].cargo = response.body.cargo;

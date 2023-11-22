@@ -11,6 +11,6 @@ void load(int port_index);
 
 void unload(int port_index);
 
-int nearest_port(void);
+int nearest_port(int last_port);
 
 #endif
