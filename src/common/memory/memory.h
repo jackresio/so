@@ -36,6 +36,8 @@ void shm_get_goods(Good **goods);
  */
 void shm_get_utils(long **utils);
 
+void shm_free(void );
+
 
 
 #endif

@@ -20,8 +20,11 @@ long *utils;
 
 int main(int argc, char *argv[]){
     int i;
+    unsigned int goods_supply_global = 0, goods_demand_global = 0;
     pid_t pid, pgid;
     unsigned int loaded = 0, empty = 0, op = 0, moving = 0;
+    int stop = false;
+    TermStatus termination_status;
     unsigned int days = 0;
     char **child_argv;
     struct sigaction sa;
@@ -129,9 +132,9 @@ int main(int argc, char *argv[]){
 
     printf("Start simulation\n");
 
-    while (days < SO_DAYS) {
-        pause();
+    while (!stop) {
         alarm(1);
+        pause();
         kill(0, SIGALRM);
         printf("\nGiorno %d \n", days + 1);
 
@@ -175,31 +178,61 @@ int main(int argc, char *argv[]){
         printf("MOVING: %d \n", moving);
 
         /*Print ports*/
+        goods_demand_global = 0;
+        goods_supply_global = 0;
         printf("PORTS INFORMATION\n");
         for (i = 0; i < SO_PORTI; i++) {
             printf("ID: %d ", ports[i].id);
             printf("AVAILABLE %d (lot): %d ", ports[i].supply.index_good, ports[i].supply.lot);
             printf("SEND (lot): %d ", ports[i].send);
             printf("RECEIVED %d (lot): %d \n", ports[i].demand.index_good, ports[i].received);
+            goods_demand_global += ports[i].demand.lot;
+            goods_supply_global += ports[i].supply.lot;
         }
         fflush(stdout);
 
-        sem_sync_ready(ALL);
-        sem_sync_wait(ALL);
-        sem_sync_reset(ALL);
-
-        days++;
+        if (days >= SO_DAYS) {
+            stop = true;
+            termination_status = DAYS;
+        }
+        if (goods_supply_global == 0) {
+            stop = true;
+            termination_status = SUPPLY_END;
+        }
+        if (goods_demand_global == 0) {
+            stop = true;
+            termination_status = DEMAND_END;
+        }
+        if (!stop){
+            sem_sync_ready(ALL);
+            sem_sync_wait(ALL);
+            sem_sync_reset(ALL);
+            days++;
+        }
     }
+
+    for (i = 0; i < SO_NAVI; i++)
+        kill(ships[i].id, SIGTERM);
+    for (i = 0; i < SO_PORTI; i++)
+        kill(ports[i].id, SIGTERM);
+
+    /*Final Report*/
+    printf("Final report \n");
+    printf("%d", termination_status);
+
+
     return 0;
 }
 
 
 void free_memory(void) {
-    sem_close();
     shmdt(ships);
     shmdt(ports);
     shmdt(goods);
     shmdt(utils);
+    sem_close();
+    shm_free();
+    msg_close();
 }
 
 void sig_handler(int sig_num) {

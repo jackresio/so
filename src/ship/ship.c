@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = sig_handler;
     sa.sa_flags = SA_RESTART;
     sigaction(SIGALRM, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
     shm_get_ships(&ships);
     shm_get_ports(&ports);
@@ -43,7 +44,6 @@ int main(int argc, char *argv[]) {
     sem_sync_get();
     sem_goods_get();
     msg_get();
-
 
     sem_sync_ready(ALL);
     sem_sync_wait(ALL);
@@ -54,13 +54,14 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         if (dest_index > -1) {
-            last_port = ships[my_index].port;
+            if (ships[my_index].port != dest_index)
+                last_port = ships[my_index].port;
             move(&ports[dest_index]);
             ships[my_index].port = dest_index;
-            if (ships[my_index].status == EMPTY) {
+            if (ships[my_index].status == EMPTY || ships[my_index].cargo.available == false) {
                 ships[my_index].status = OP;
                 load(dest_index);
-            } else if (ships[my_index].status == LOADED) {
+            } else if (ships[my_index].status == LOADED || ships[my_index].cargo.available != false) {
                 ships[my_index].status = OP;
                 unload(dest_index);
             }
@@ -72,7 +73,6 @@ int main(int argc, char *argv[]) {
 }
 
 int nearest_port(int last_port) {
-    static int last_visited_port = -1;
     int i;
     double travel_time, min_distance = 0, temp_distance;
     int dest = -1;
@@ -82,7 +82,7 @@ int nearest_port(int last_port) {
             for (i = 0; i < SO_PORTI; i++) {
                 temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                 travel_time = temp_distance / SO_SPEED;
-                if (travel_time < ports[i].supply.ttl && last_visited_port != i) {
+                if (ports[i].supply.available == true && travel_time < ports[i].supply.ttl && last_port != i) {
                     min_distance = temp_distance;
                     dest = i;
                     break;
@@ -91,7 +91,7 @@ int nearest_port(int last_port) {
             while (i < SO_PORTI) {
                 temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                 travel_time = temp_distance / SO_SPEED;
-                if (travel_time < ports[i].supply.ttl && temp_distance < min_distance && last_visited_port != i) {
+                if (ports[i].supply.available == true && travel_time < ports[i].supply.ttl && temp_distance < min_distance && last_port != i) {
                     min_distance = temp_distance;
                     dest = i;
                 }
@@ -103,7 +103,7 @@ int nearest_port(int last_port) {
                 if (ports[i].demand.index_good == ships[my_index].cargo.index_good) {
                     temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                     travel_time = temp_distance / SO_SPEED;
-                    if (travel_time < ships[my_index].cargo.ttl && last_visited_port != i) {
+                    if (ports[i].demand.available == true && travel_time < ships[my_index].cargo.ttl && last_port != i) {
                         min_distance = temp_distance;
                         dest = i;
                         break;
@@ -114,7 +114,7 @@ int nearest_port(int last_port) {
                 if (ports[i].demand.index_good == ships[my_index].cargo.index_good) {
                     temp_distance = calc_distance(ships[my_index].position, ports[i].position);
                     travel_time = temp_distance / SO_SPEED;
-                    if (travel_time < ships[my_index].cargo.ttl && temp_distance < min_distance && last_visited_port != i) {
+                    if (ports[i].demand.available == true && travel_time < ships[my_index].cargo.ttl && temp_distance < min_distance && last_port != i) {
                         min_distance = temp_distance;
                         dest = i;
                     }
@@ -126,7 +126,6 @@ int nearest_port(int last_port) {
         case MOVING:
             break;
     }
-    last_visited_port = dest;
     return dest;
 }
 
@@ -220,6 +219,11 @@ void sig_handler(int signum) {
             sem_sync_ready(ALL);
             sem_sync_wait(ALL);
             break;
+        case SIGTERM:
+            shmdt(ships);
+            shmdt(ports);
+            shmdt(goods);
+            exit(0);
     }
 }
 

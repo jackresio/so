@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = sig_handler;
     sa.sa_flags = SA_RESTART;
     sigaction(SIGALRM, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
 
     init_config("../config.txt");
@@ -148,6 +149,8 @@ void dispatch(void) {
             goods[response.body.cargo.index_good].available -= response.body.cargo.lot;
             sem_goods_release(response.body.cargo.index_good);
             ports[my_index].supply.lot -= response.body.cargo.lot;
+            if (ports[my_index].supply.lot == 0)
+                ports[my_index].supply.available = false;
             ports[my_index].send += response.body.cargo.lot;
             break;
         case REQUEST_ULOAD:
@@ -167,8 +170,10 @@ void dispatch(void) {
             goods[response.body.cargo.index_good].on_ship -= response.body.cargo.lot;
             goods[response.body.cargo.index_good].delivered += response.body.cargo.lot;
             sem_goods_release(response.body.cargo.index_good);
-            ports[my_index].demand.lot -= response.body.cargo.lot;
             ports[my_index].received += response.body.cargo.lot;
+            ports[my_index].demand.lot -= response.body.cargo.lot;
+            if (ports[my_index].demand.lot == 0)
+                ports[my_index].demand.available = false;
             break;
     }
 }
@@ -181,11 +186,20 @@ void sig_handler(int signum) {
                 ports[my_index].supply.ttl--;
                 if (ports[my_index].supply.ttl == 0) {
                     ports[my_index].supply.available = false;
+                    ports[my_index].supply.lot = 0;
                     goods[id_good].expired_port += ports[my_index].supply.lot;
                     goods[id_good].available -= ports[my_index].supply.lot;
                 }
             }
             sem_sync_ready(ALL);
             sem_sync_wait(ALL);
+            break;
+
+        case SIGTERM:
+            shmdt(ships);
+            shmdt(ports);
+            shmdt(goods);
+            shmdt(utils);
+            exit(0);
     }
 }
