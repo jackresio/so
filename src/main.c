@@ -219,6 +219,7 @@ int main(int argc, char *argv[]){
     /*Final Report*/
     printf("Final report \n");
     printf("%d", termination_status);
+    free_memory();
 
 
     return 0;

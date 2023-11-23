@@ -6,7 +6,6 @@ UTILS = src/common/utils/config.c src/common/utils/utils.c
 
 
 all: obj/main.o obj/port.o obj/ship.o obj/utils.o obj/msg.o obj/sync.o obj/config.o obj/map.o obj/memory.o src/common/utils/utils.h
-	make clean
 	$(CC) $(CFLAGS) obj/port.o obj/msg.o obj/sync.o obj/utils.o obj/config.o obj/memory.o obj/map.o -o bin/port.bin
 	$(CC) $(CFLAGS) obj/ship.o obj/msg.o obj/sync.o obj/utils.o obj/config.o obj/memory.o obj/map.o -o bin/ship.bin
 	$(CC) $(CFLAGS) obj/main.o obj/msg.o obj/sync.o obj/utils.o obj/config.o obj/memory.o obj/map.o -o bin/main.bin
