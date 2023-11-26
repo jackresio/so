@@ -5,6 +5,7 @@
 #define SISTEMIOPERATIVI_ENTITIES_H
 
 #include "utils/map.h"
+#include <unistd.h>
 
 /**
  * Struttura che rappresenta la merce generata ad inizio simulazione
@@ -29,7 +30,7 @@ struct good {
  */
 struct cargo {
     unsigned int available;
-    unsigned int id_good;
+    unsigned int index_good;
     unsigned int lot;
     unsigned int ttl;
 }typedef Cargo;
@@ -38,14 +39,10 @@ struct cargo {
  * Rappresentazione di tutti gli stati in cui si può trovare una nave
  */
 typedef enum{
-    ALIVE,
-    SUNK,
     OP,             /*Operation, durante carico e scarico*/
     MOVING,
     EMPTY,
-    LOADED,
-    SWELL,
-    STORM
+    LOADED
 } ShipState;
 
 struct ship {

@@ -1,6 +1,7 @@
 #include "map.h"
 #include "stdlib.h"
 #include "config.h"
+#include <math.h>
 
 void rand_position(Point *position){
     position->x = ((double)rand()/(double)(RAND_MAX)) * SO_LATO;
@@ -43,4 +44,8 @@ int compare_position(Point p1, Point p2){
         return 1;
     else
         return 0;
+}
+
+double calc_distance(Point a, Point b){
+     return sqrt(pow((a.x - b.x), 2) + pow((a.y - b.y),2));
 }
